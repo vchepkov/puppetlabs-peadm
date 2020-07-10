@@ -8,6 +8,7 @@ declare PT_token_file
 declare PT_legacy
 declare PT_replica
 declare PT_action
+declare PT_topology
 
 export USER=$(id -un)
 export HOME=$(getent passwd "$USER" | cut -d : -f 6)
@@ -19,6 +20,11 @@ else
   export TOKEN_FILE="$PT_token_file"
 fi
 
+if [ "$PT_topology" = "mono" ] ; then
+  AGENT_CONFIG=""
+else
+  AGENT_CONFIG="--skip-agent-config"
+fi
 
 set -e
 
@@ -41,22 +47,22 @@ if [ "$PT_legacy" = "false" ]; then
       puppet infrastructure provision replica "$PT_replica" \
         --color false \
         --yes --token-file "$TOKEN_FILE" \
-        --skip-agent-config \
-        --topology mono-with-compile
+        $AGENT_CONFIG \
+        --topology "$PT_topology"
       ;;
     enable)
       puppet infrastructure enable replica "$PT_replica" \
         --color false \
         --yes --token-file "$TOKEN_FILE" \
-        --skip-agent-config \
-        --topology mono-with-compile
+        $AGENT_CONFIG \
+        --topology "$PT_topology"
       ;;
     both|*)
       puppet infrastructure provision replica "$PT_replica" \
         --color false \
         --yes --token-file "$TOKEN_FILE" \
-        --skip-agent-config \
-        --topology mono-with-compile \
+        $AGENT_CONFIG \
+        --topology "$PT_topology" \
         --enable
       ;;
   esac
@@ -74,8 +80,8 @@ elif [ "$PT_legacy" = "true" ]; then
   puppet infrastructure enable replica "$PT_replica" \
     --color false \
     --yes --token-file "$TOKEN_FILE" \
-    --skip-agent-config \
-    --topology mono-with-compile
+    $AGENT_CONFIG \
+    --topology "$PT_topology"
 
 else
   exit 1

@@ -2,7 +2,7 @@
 #
 # @summary Configure first-time classification and DR setup
 #
-# @param compiler_pool_address 
+# @param compiler_pool_address
 #   The service address used by agents to connect to compilers, or the Puppet
 #   service. Typically this is a load balancer.
 # @param internal_compiler_a_pool_address
@@ -120,6 +120,11 @@ plan peadm::subplans::configure (
   }
 
   if $arch['disaster-recovery'] {
+    $topology =  $arch['architecture']? {
+      'standard' => 'mono',
+      default    => 'mono-with-compile',
+    }
+
     # Pre-flight: wait for PuppetDB to report fully "running" (not "starting")
     # before invoking the replica provision orchestrator, to reduce the odds
     # of the known race described below. See PE-42816.
@@ -146,6 +151,7 @@ plan peadm::subplans::configure (
           replica       => $replica_target.peadm::certname(),
           token_file    => $token_file,
           legacy        => true,
+          topology      => $topology,
           _catch_errors => true,
         )
       }
