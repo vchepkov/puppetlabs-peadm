@@ -56,20 +56,21 @@ plan peadm::action::configure (
     content => $global_hiera_yaml,
   )
 
-  # Set up the console node groups to configure the various hosts in their roles
+  unless $arch['architecture'] == 'standard' {
+    # Set up the console node groups to configure the various hosts in their roles
+    apply($master_target) {
+      class { 'peadm::setup::node_manager_yaml':
+        master_host => $master_target.peadm::target_name(),
+      }
 
-  apply($master_target) {
-    class { 'peadm::setup::node_manager_yaml':
-      master_host => $master_target.peadm::target_name(),
-    }
-
-    class { 'peadm::setup::node_manager':
-      master_host                    => $master_target.peadm::target_name(),
-      master_replica_host            => $master_replica_target.peadm::target_name(),
-      puppetdb_database_host         => $puppetdb_database_target.peadm::target_name(),
-      puppetdb_database_replica_host => $puppetdb_database_replica_target.peadm::target_name(),
-      compiler_pool_address          => $compiler_pool_address,
-      require                        => Class['peadm::setup::node_manager_yaml'],
+      class { 'peadm::setup::node_manager':
+        master_host                    => $master_target.peadm::target_name(),
+        master_replica_host            => $master_replica_target.peadm::target_name(),
+        puppetdb_database_host         => $puppetdb_database_target.peadm::target_name(),
+        puppetdb_database_replica_host => $puppetdb_database_replica_target.peadm::target_name(),
+        compiler_pool_address          => $compiler_pool_address,
+        require                        => Class['peadm::setup::node_manager_yaml'],
+      }
     }
   }
 
@@ -84,11 +85,6 @@ plan peadm::action::configure (
       master_replica => $master_replica_target.peadm::target_name(),
       token_file     => $token_file,
       topology       => $topology,
-
-      # Race condition, where the provision command checks PuppetDB status and
-      # probably gets "starting", but fails out because that's not "running".
-      # Can remove flag when that issue is fixed.
-      legacy         => true,
     )
   }
 

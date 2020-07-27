@@ -168,29 +168,33 @@ plan peadm::upgrade (
     },
   )
 
-  # Update classification. This needs to be done now because if we don't, and
-  # the PE Compiler node groups are wrong, then the compilers won't be able to
-  # successfully classify and update
-  apply($master_target) {
-    class { 'peadm::setup::node_manager_yaml':
-      master_host => $master_target.peadm::target_name(),
-    }
+  unless $arch['architecture'] == 'standard' {
+    # Update classification. This needs to be done now because if we don't, and
+    # the PE Compiler node groups are wrong, then the compilers won't be able to
+    # successfully classify and update
+    apply($master_target) {
+      class { 'peadm::setup::node_manager_yaml':
+        master_host => $master_target.peadm::target_name(),
+      }
 
-    class { 'peadm::setup::node_manager':
-      master_host                    => $master_target.peadm::target_name(),
-      master_replica_host            => $master_replica_target.peadm::target_name(),
-      puppetdb_database_host         => $puppetdb_database_target.peadm::target_name(),
-      puppetdb_database_replica_host => $puppetdb_database_replica_target.peadm::target_name(),
-      require                        => Class['peadm::setup::node_manager_yaml'],
+      class { 'peadm::setup::node_manager':
+        master_host                    => $master_target.peadm::target_name(),
+        master_replica_host            => $master_replica_target.peadm::target_name(),
+        puppetdb_database_host         => $puppetdb_database_target.peadm::target_name(),
+        puppetdb_database_replica_host => $puppetdb_database_replica_target.peadm::target_name(),
+        require                        => Class['peadm::setup::node_manager_yaml'],
+      }
     }
   }
 
-  # Upgrade the compiler group A targets
-  run_task('peadm::puppet_infra_upgrade', $master_target,
-    type       => 'compiler',
-    targets    => $compiler_m1_targets.map |$t| { $t.peadm::target_name() },
-    token_file => $token_file,
-  )
+  unless $arch['architecture'] == 'standard' {
+    # Upgrade the compiler group A targets
+    run_task('peadm::puppet_infra_upgrade', $master_target,
+      type       => 'compiler',
+      targets    => $compiler_m1_targets.map |$t| { $t.peadm::target_name() },
+      token_file => $token_file,
+    )
+  }
 
   ###########################################################################
   # UPGRADE REPLICA SIDE
@@ -224,12 +228,14 @@ plan peadm::upgrade (
     token_file => $token_file,
   )
 
-  # Upgrade the compiler group B targets
-  run_task('peadm::puppet_infra_upgrade', $master_target,
-    type       => 'compiler',
-    targets    => $compiler_m2_targets.map |$t| { $t.peadm::target_name() },
-    token_file => $token_file,
-  )
+  unless $arch['architecture'] == 'standard' {
+    # Upgrade the compiler group B targets
+    run_task('peadm::puppet_infra_upgrade', $master_target,
+      type       => 'compiler',
+      targets    => $compiler_m2_targets.map |$t| { $t.peadm::target_name() },
+      token_file => $token_file,
+    )
+  }
 
   ###########################################################################
   # FINALIZE UPGRADE

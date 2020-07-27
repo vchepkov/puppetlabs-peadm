@@ -282,8 +282,11 @@ plan peadm::action::install (
 
   # Now that the main PuppetDB database node is ready, finish priming the
   # master. Explicitly stop puppetdb first to avoid any systemd interference.
-  run_command('systemctl stop pe-puppetdb', $master_target)
-  run_command('systemctl start pe-puppetdb', $master_target)
+  if $arch['architecture'] == 'extra-large' {
+    run_command('systemctl stop pe-puppetdb', $master_target)
+    run_command('systemctl start pe-puppetdb', $master_target)
+  }
+
   run_task('peadm::rbac_token', $master_target,
     password => $console_password,
   )
