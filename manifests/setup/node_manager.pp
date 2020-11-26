@@ -9,13 +9,29 @@
 #                 environments => ["production", "staging", "development"],
 #               }'
 #
+# @param compiler_pool_address 
+#   The service address used by agents to connect to compilers, or the Puppet
+#   service. Typically this is a load balancer.
+# @param internal_compiler_a_pool_address
+#   A load balancer address directing traffic to any of the "A" pool
+#   compilers. This is used for DR/HA configuration in large and extra large
+#   architectures.
+# @param internal_compiler_b_pool_address
+#   A load balancer address directing traffic to any of the "B" pool
+#   compilers. This is used for DR/HA configuration in large and extra large
+#   architectures.
+#
 class peadm::setup::node_manager (
-  # Common
+  # Standard
   String[1] $master_host,
-  Optional[String[1]] $compiler_pool_address          = undef,
 
   # High Availability
   Optional[String[1]] $master_replica_host            = undef,
+
+  # Common
+  Optional[String[1]] $compiler_pool_address            = undef,
+  Optional[String[1]] $internal_compiler_a_pool_address = $master_host,
+  Optional[String[1]] $internal_compiler_b_pool_address = $master_replica_host,
 
   # For the next two parameters, the default values are appropriate when
   # deploying Standard or Large architectures. These values only need to be
@@ -46,7 +62,9 @@ class peadm::setup::node_manager (
   # out-of-box configuration of the group.
   $compiler_pool_address_data = $compiler_pool_address ? {
     undef   => undef,
-    default => { 'pe_repo' => { 'compile_master_pool_address' => $compiler_pool_address } },
+    default => Deferred('peadm::merge_ng_config_data', ['PE Master',
+      { 'pe_repo' => { 'compile_master_pool_address' => $compiler_pool_address } }
+    ]),
   }
 
   node_group { 'PE Master':
@@ -92,7 +110,6 @@ class peadm::setup::node_manager (
   node_group { 'PE Compiler Group A':
     ensure  => 'present',
     parent  => 'PE Compiler',
-    data    => { },
     rule    => ['and',
       ['=', ['trusted', 'extensions', 'pp_auth_role'], 'pe_compiler'],
       ['=', ['trusted', 'extensions', peadm::oid('peadm_availability_group')], 'A'],
@@ -102,22 +119,25 @@ class peadm::setup::node_manager (
         'database_host' => $puppetdb_database_host,
       },
       'puppet_enterprise::profile::master'   => {
-        'puppetdb_host' => ['${trusted[\'certname\']}', $master_replica_host].filter |$_| { $_ }, # lint:ignore:single_quote_string_with_variables
+        'puppetdb_host' => ['${trusted[\'certname\']}', $internal_compiler_b_pool_address].filter |$_| { $_ }, # lint:ignore:single_quote_string_with_variables
         'puppetdb_port' => [8081],
       }
+    },
+    data    => {
+      # Workaround for GH-118
+      'puppet_enterprise::profile::master::puppetdb' => {
+        'ha_enabled_replicas' => [ ],
+      },
     },
   }
 
   # Create the replica and B groups if a replica master and database host are
   # supplied
   if $master_replica_host {
-    # We need to pre-create this group so that the master replica can be
-    # identified as running PuppetDB, so that Puppet will create a pg_ident
-    # authorization rule for it on the PostgreSQL nodes.
+    # We need to ensure this group provides the peadm_replica variable.
     node_group { 'PE HA Replica':
       ensure    => 'present',
       parent    => 'PE Infrastructure',
-      rule      => ['or', ['=', 'name', $master_replica_host]],
       classes   => {
         'puppet_enterprise::profile::primary_master_replica' => { }
       },
@@ -144,7 +164,6 @@ class peadm::setup::node_manager (
     node_group { 'PE Compiler Group B':
       ensure  => 'present',
       parent  => 'PE Compiler',
-      data    => { },
       rule    => ['and',
         ['=', ['trusted', 'extensions', 'pp_auth_role'], 'pe_compiler'],
         ['=', ['trusted', 'extensions', peadm::oid('peadm_availability_group')], 'B'],
@@ -154,9 +173,15 @@ class peadm::setup::node_manager (
           'database_host' => $puppetdb_database_replica_host,
         },
         'puppet_enterprise::profile::master'   => {
-          'puppetdb_host' => ['${trusted[\'certname\']}', $master_host], # lint:ignore:single_quote_string_with_variables
+          'puppetdb_host' => ['${trusted[\'certname\']}', $internal_compiler_a_pool_address], # lint:ignore:single_quote_string_with_variables
           'puppetdb_port' => [8081],
         }
+      },
+      data    => {
+        # Workaround for GH-118
+        'puppet_enterprise::profile::master::puppetdb' => {
+          'ha_enabled_replicas' => [ ],
+        },
       },
     }
   }
