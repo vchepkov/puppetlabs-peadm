@@ -1,5 +1,16 @@
 # PEADM module
 
+## 2.4.5
+### Summary
+
+Bugfix release
+
+### Bugfixes
+
+* Fix an issue in the convert plan incorrectly disallowing conversion of deployments newer than 2019.7.0.
+* Fix a problem with the Peadm::SingleTargetSpec type alias.
+* Fix peadm::puppet\_runonce to correctly return a failure if the Puppet agent run had resource failures.
+
 ## 2.4.4
 ### Summary
 
