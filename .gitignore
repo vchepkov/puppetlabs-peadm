@@ -27,3 +27,7 @@
 /inventory.yaml
 .rerun.json
 *.tar.gz
+.modules/
+.plan_cache.json
+.resource_types/
+bolt-debug.log
