@@ -1,5 +1,20 @@
 # PEADM module
 
+## 2.5.0
+### Summary
+
+### Changes
+
+- Require WhatsARanjit-node\_manager >= 0.7.5
+- Require puppetlabs-stdlib >= 6.5.0
+
+### Improvements
+
+- Support PE 2021.0
+- Handle exit code 11 from replica upgrade task gracefully. Code 11 means "PuppetDB sync in progress but not yet complete"
+- Further remediate the bug fixed in 2.4.2, by ensuring that all peadm-managed node groups preserve existing data or class parameters not explicitly being managed
+- Switch dependency enumeration from in-project Puppetfile to bolt-project.yaml modules setting
+
 ## 2.4.5
 ### Summary
 
