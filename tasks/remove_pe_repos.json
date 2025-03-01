@@ -1,0 +1,5 @@
+{
+  "description": "Removes pe_repo::platform::* classes from the PE Master",
+  "files": ["ruby_task_helper/files/task_helper.rb"],
+  "private": true
+}
