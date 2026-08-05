@@ -6,8 +6,12 @@
       "description": "The fully qualified path of the file to create"
     },
     "content": {
-      "type": "String",
+      "type": "Optional[String]",
       "description": "The content to create the file with"
+    },
+    "base64_content": {
+      "type": "Optional[String]",
+      "description": "Base64-encoded content to create the file with, for binary content that cannot be passed as a String"
     },
     "owner": {
       "type": "Optional[String]",
