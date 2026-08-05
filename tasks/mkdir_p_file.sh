@@ -13,7 +13,11 @@ if [ ! -z "$PT_chown_r" ]; then
   chown -R "$PT_owner":"$PT_group" "$PT_chown_r"
 fi
 
-cat > "$PT_path" <<MKDIRPEOF
-$PT_content
-MKDIRPEOF
+if [ ! -z "$PT_base64_content" ]; then
+  # Binary content cannot be passed as a String, so it arrives base64-encoded.
+  # No trailing newline here -- it would corrupt the decoded file.
+  printf '%s' "$PT_base64_content" | base64 -d > "$PT_path"
+else
+  printf '%s\n' "$PT_content" > "$PT_path"
+fi
 
