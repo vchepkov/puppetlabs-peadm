@@ -170,8 +170,8 @@ plan peadm::subplans::configure (
 
   # Deploy an environment if a deploy environment is specified
   if $deploy_environment {
-    run_task('peadm::code_manager', $primary_target,
-      action => "deploy ${deploy_environment}",
+    run_plan('peadm::util::deploy_environment', $primary_target,
+      environment => $deploy_environment,
     )
   }
 

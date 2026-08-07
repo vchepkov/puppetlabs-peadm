@@ -90,6 +90,7 @@
 * [`rbac_token`](#rbac_token): Get and save an rbac token for the root user, admin rbac user
 * [`read_file`](#read_file): Read the contents of a file
 * [`reinstall_pe`](#reinstall_pe): Reinstall PE, only to be used to restore PE
+* [`remove_pe_repos`](#remove_pe_repos): Removes pe_repo::platform::* classes from the PE Master
 * [`restore_classification`](#restore_classification): A short description of this task
 * [`sign_csr`](#sign_csr): Submit a certificate signing request
 * [`ssl_clean`](#ssl_clean): Clean an agent's certificate
@@ -139,6 +140,7 @@ Supported use cases:
 * `peadm::util::copy_file`
 * `peadm::util::db_disable_pglogical`
 * `peadm::util::db_purge`
+* `peadm::util::deploy_environment`: Deploy a code environment, retrying on failure.  The peadm::code_manager task invokes r10k, which fetches code from the r10k remote. That fet
 * `peadm::util::insert_csr_extension_requests`
 * `peadm::util::retrieve_and_upload`
 * `peadm::util::sanitize_pg_pe_conf`
@@ -1337,9 +1339,15 @@ The fully qualified path of the file to create
 
 ##### `content`
 
-Data type: `String`
+Data type: `Optional[String]`
 
 The content to create the file with
+
+##### `base64_content`
+
+Data type: `Optional[String]`
+
+Base64-encoded content to create the file with, for binary content that cannot be passed as a String
 
 ##### `owner`
 
@@ -1495,6 +1503,12 @@ Data type: `String`
 
 The name of the replica to provision
 
+##### `topology`
+
+Data type: `String`
+
+The topology of PE installation
+
 ##### `token_file`
 
 Data type: `Optional[String]`
@@ -1624,6 +1638,12 @@ The PE installation platform
 Data type: `Boolean`
 
 Whether we want to uninstall PE before installing
+
+### <a name="remove_pe_repos"></a>`remove_pe_repos`
+
+Removes pe_repo::platform::* classes from the PE Master
+
+**Supports noop?** false
 
 ### <a name="restore_classification"></a>`restore_classification`
 
