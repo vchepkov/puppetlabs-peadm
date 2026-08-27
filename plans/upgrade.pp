@@ -286,6 +286,11 @@ plan peadm::upgrade (
       puppet_service_ensure => 'stopped',
     )
 
+    # The installer replaces /opt/puppetlabs, so re-apply before any compile
+    run_script('peadm/eyaml_bc_workaround.rb', $primary_target,
+      'Work around BC >= 1.85 rejecting empty-issuer-DN eyaml certificates',
+    )
+
     # If in use, wait until orchestrator service is healthy to proceed
     if $all_targets.any |$target| { $target.protocol == 'pcp' } {
       peadm::wait_until_service_ready('orchestrator-service', $primary_target)
@@ -423,6 +428,11 @@ plan peadm::upgrade (
       type       => 'replica',
       targets    => $replica_target.map |$t| { $t.peadm::certname() },
       token_file => $token_file,
+    )
+
+    # `puppet infra upgrade` replaces /opt/puppetlabs on the replica too
+    run_script('peadm/eyaml_bc_workaround.rb', $replica_target,
+      'Work around BC >= 1.85 rejecting empty-issuer-DN eyaml certificates',
     )
 
     # Return the delete-reports CLI app to its original state
